@@ -1,16 +1,21 @@
-import { NextPage } from "next";
-import { useEffect, useState } from "react";
+import { GetServerSideProps, NextPage } from "next";
+import { useState } from "react";
 
-const IndexPage: NextPage = () => {
-  const [imageUrl, setImageUrl] = useState("");
-  const [loading, setLoading] = useState(true);
+// getServerSidePropsから渡されるpropsの型
+type Props = {
+  initialImageUrl: string;
+};
+
+const IndexPage: NextPage<Props> = ({ initialImageUrl }) => {
+  const [imageUrl, setImageUrl] = useState(initialImageUrl);
+  const [loading, setLoading] = useState(false);
   // マウント時に画像を読み込む
-  useEffect(() => {
-    fetchImage().then((newImage) => {
-      setImageUrl(newImage.url);
-      setLoading(false);
-    })
-  }, [])
+  // useEffect(() => {
+  //   fetchImage().then((newImage) => {
+  //     setImageUrl(newImage.url);
+  //     setLoading(false);
+  //   })
+  // }, [])
   const handleClick = async () => {
     setLoading(true); // 読み込み中フラグを立てる
     const newImage = await fetchImage();
@@ -23,6 +28,18 @@ const IndexPage: NextPage = () => {
       <div>{loading || <img src={imageUrl} />}</div>
     </div>
   )
+};
+
+export default IndexPage;
+
+// サーバーサイドで実行する処理
+export const getServerSideProps: GetServerSideProps<Props> = async () => {
+  const image = await fetchImage();
+  return {
+    props: {
+      initialImageUrl: image.url,
+    },
+  };
 };
 
 type Image = {
@@ -52,6 +69,3 @@ const isImage = (value: unknown): value is Image => {
   // urlプロパティが存在し、かつそれが文字列なのか
   return "url" in value && typeof value.url === "string";
 };
-
-fetchImage();
-export default IndexPage;
